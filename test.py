@@ -151,3 +151,19 @@ if __name__ == "__main__":
   c3t = pp(k, c3_train, bl, hashlib.blake2s)
 
 
+  x0 = pp(k, c0_test, bl, hashlib.blake2s)
+  x1 = pp(k, c1_test, bl, hashlib.blake2s)
+  x2 = pp(k, c2_test, bl, hashlib.blake2s)
+  x3 = pp(k, c3_test, bl, hashlib.blake2s)
+
+  res0 = test(x0, c0t, c1t, c2t, c3t)
+  res1 = test(x1, c0t, c1t, c2t, c3t)
+  res2 = test(x2, c0t, c1t, c2t, c3t)
+  res3 = test(x3, c0t, c1t, c2t, c3t)
+  print(res0)
+  print(res1)
+  print(res2)
+  print(res3)
+  
+
+
