@@ -58,10 +58,34 @@ void print_vec_2d(vector<vector<double>> xs, int size){
   }
 }
 
-vector<vector<double>> pp_xs(vector<vector<double>> xs, int bs, int dim){
+vector<vector<double>> pp_xs(vector<vector<double>> xs, int l, int ls, int n, int dim, int bs){
   assert(xs.size() == bs);
   assert(xs[0].size() == dim);
-  return xs;
+
+  vector<vector<double>> res;
+  for(int i=0; i<n-1; i++){
+    vector<double> tmp;
+    for(int j=0; j<l; j++){
+      for(int k=0; k<dim; k++){
+        tmp.push_back(xs[i][j*dim+k]);
+      }
+
+    }
+    res.push_back(tmp);
+  }
+
+  vector<double> tmp;
+  for(int j=0; j<ls; j++){
+    for(int k=0; k<dim; k++){
+      tmp.push_back(xs[n-1][j*dim+k]);
+    }
+
+  }
+  res.push_back(tmp);
+
+  assert(res.size()==n);
+
+  return res;
 }
 
 vector<vector<double>> pp_ys(vector<vector<double>> ys){
@@ -190,7 +214,9 @@ int main(){
 
     double start, end;
     start = get_time_msec();
-    vector<vector<double>> ppd_xs = pp_xs(xs, bs, dim);
+    vector<vector<double>> ppd_xs = pp_xs(xs, l, ls, n, dim, bs);
+    cout << ppd_xs.size() << endl;
+    cout << ppd_xs[0].size() << endl;
 
     //print_vec_2d(ppd_xs, dim*(l+1));
     vector<double> ppd_w = pp_w(w, dim);
