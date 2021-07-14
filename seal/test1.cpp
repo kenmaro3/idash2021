@@ -10,22 +10,29 @@ using namespace seal;
 
 #include <chrono>
 using namespace std::chrono;
-inline double get_time_sec(void){
-    return static_cast<double>(duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count())/1000000000;
+inline double get_time_msec(void){
+    return static_cast<double>(duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count())/1000000;
 }
 
-vector<vector<double>> give_me_ys(int bs, int dim){
-  vector<vector<double>> res;
-  for(int i=0; i<bs; i++){
-    vector<double> tmp;
-    for(int j=0; j<dim; j++){
-      tmp.push_back(double(i)*0.1 + double(j));
-    }
-    res.push_back();
+//vector<vector<double>> give_me_ys(int bs, int dim){
+//  vector<vector<double>> res;
+//  for(int i=0; i<bs; i++){
+//    vector<double> tmp;
+//    for(int j=0; j<dim; j++){
+//      tmp.push_back(double(i)*0.1 + double(j));
+//    }
+//    res.push_back();
+//  }
+//  return res;
+//}
+
+vector<double> give_me_w(int dim){
+  vector<double> res;
+  for(int i=0; i<dim; i++){
+    res.push_back(double(i)*0.1 + double(i));
   }
   return res;
 }
-
 
 vector<vector<double>> give_me_xs(int batch_size, int dim){
   vector<vector<double>> xs(batch_size, vector<double>(dim));
@@ -51,10 +58,10 @@ void print_vec_2d(vector<vector<double>> xs, int size){
   }
 }
 
-vector<vector<double>> pp_xs(vector<vector<double>> xs){
+vector<vector<double>> pp_xs(vector<vector<double>> xs, int bs, int dim){
   assert(xs.size() == bs);
   assert(xs[0].size() == dim);
-  return res;
+  return xs;
 }
 
 vector<vector<double>> pp_ys(vector<vector<double>> ys){
@@ -164,15 +171,14 @@ int main(){
 
     CKKSEncoder encoder(context);
 
-    int dim = 2;
-    int bs = 1;
-    int num = 3;
+    int dim = 200;
+    int bs = 2000;
     vector<double> w = give_me_w(dim);
     vector<vector<double>> xs = give_me_xs(bs, dim);
 
-    print_vec_1d(w, dim);
-    cout << endl;
-    print_vec_2d(xs, dim);
+    //print_vec_1d(w, dim);
+    //cout << endl;
+    //print_vec_2d(xs, dim);
 
     int l = min(pmd/2/2/dim, bs); // 1 ctxt can have at most l of x
     int n = bs/l;
@@ -182,19 +188,27 @@ int main(){
     if(nt!=0) ls = nt; // last ctxt has ls of x
     printf("dim=%d\nbs=%d\nl=%d\nn=%d\nnt=%d\nls=%d\n", dim, bs, l, n, nt, ls);
 
-    vector<vector<double>> ppd_xs = pp_xs(xs, l, ls, n, dim, bs);
+    double start, end;
+    start = get_time_msec();
+    vector<vector<double>> ppd_xs = pp_xs(xs, bs, dim);
 
-    cout << "\npp_xs" << endl;
-    print_vec_2d(ppd_xs, dim*(l+1));
+    //print_vec_2d(ppd_xs, dim*(l+1));
     vector<double> ppd_w = pp_w(w, dim);
+    cout << "\npp done" << endl;
 
     vector<Ciphertext> enc_xs = encode_encrypt_input(ppd_xs, encoder, encryptor, scale, n);
     Plaintext plain_w = encode_w(ppd_w, encoder, scale);
+    cout << "\nenc done" << endl;
     vector<Ciphertext> xs_w = mult_xs_w(enc_xs, plain_w, evaluator, relin_keys, n);
+    cout << "\nmult done" << endl;
     vector<vector<double>> dec_res = decrypt_decode_res(xs_w, encoder, decryptor, n);
+    cout << "\ndec done" << endl;
     vector<double> psp_x_w = psp_res(dec_res, l, ls, n, dim, bs);
+    cout << "\npsp done" << endl;
+    end = get_time_msec();
     cout << "\npsp_x_w" << endl;
     print_vec_1d(psp_x_w, bs);
+    printf("time: %f\n", end-start);
 
     return 0;
 
