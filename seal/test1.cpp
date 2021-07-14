@@ -77,7 +77,7 @@ vector<vector<double>> pp_xs(vector<vector<double>> xs, int l, int ls, int n, in
   vector<double> tmp;
   for(int j=0; j<ls; j++){
     for(int k=0; k<dim; k++){
-      tmp.push_back(xs[n-1][j*dim+k]);
+      tmp.push_back(xs[(n-1)*l+j][k]);
     }
 
   }
@@ -167,6 +167,33 @@ vector<double> psp_res(vector<vector<double>> xs, int l, int ls, int n, int dim,
 }
 
 
+vector<double> debug(vector<vector<double>> xs, vector<double> w, int dim, int bs){
+  assert(xs.size() == bs);
+  assert(xs[0].size() == dim);
+  assert(w.size() == dim);
+
+  vector<vector<double>> tmp1;
+  for(int i=0; i<bs; i++){
+    vector<double> tmp2;
+    for(int j=0; j<dim; j++){
+      tmp2.push_back(xs[i][j]*w[j]);
+    }
+    tmp1.push_back(tmp2);
+  }
+
+  vector<double> res;
+  for(int i=0; i<bs; i++){
+    double tmp3 = 0;
+    for(int j=0; j<dim; j++){
+      tmp3 += tmp1[i][j];
+    }
+    res.push_back(tmp3);
+  }
+
+  return res;
+}
+
+
 
 
 int main(){
@@ -195,8 +222,8 @@ int main(){
 
     CKKSEncoder encoder(context);
 
-    int dim = 200;
-    int bs = 2000;
+    int dim = 3;
+    int bs = 10;
     vector<double> w = give_me_w(dim);
     vector<vector<double>> xs = give_me_xs(bs, dim);
 
@@ -218,6 +245,9 @@ int main(){
     cout << ppd_xs.size() << endl;
     cout << ppd_xs[0].size() << endl;
 
+    print_vec_2d(ppd_xs, 10);
+
+
     //print_vec_2d(ppd_xs, dim*(l+1));
     vector<double> ppd_w = pp_w(w, dim);
     cout << "\npp done" << endl;
@@ -235,6 +265,8 @@ int main(){
     cout << "\npsp_x_w" << endl;
     print_vec_1d(psp_x_w, bs);
     printf("time: %f\n", end-start);
+
+    print_vec_1d(debug(xs, w, dim, bs), bs);
 
     return 0;
 
