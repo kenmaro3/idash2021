@@ -199,11 +199,24 @@ vector<double> debug(vector<vector<double>> xs, vector<double> w, int dim, int b
 int main(){
     cout << "hello, world" << endl;
     EncryptionParameters parms(scheme_type::ckks);
+
+
+    /* 8192
     size_t poly_modulus_degree = 8192;
     int pmd = 8192;
     parms.set_poly_modulus_degree(poly_modulus_degree);
     parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, { 60, 40, 60 }));
     double scale = pow(2.0, 40);
+    */
+
+    // /* 4096
+    size_t poly_modulus_degree = 4096;
+    int pmd = 4096;
+    parms.set_poly_modulus_degree(poly_modulus_degree);
+    parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, { 40, 29, 40 }));
+    double scale = pow(2.0, 29);
+    // */
+    
     SEALContext context(parms);
 
     // key gen
@@ -222,8 +235,8 @@ int main(){
 
     CKKSEncoder encoder(context);
 
-    int dim = 3;
-    int bs = 10;
+    int dim = 200;
+    int bs = 2000;
     vector<double> w = give_me_w(dim);
     vector<vector<double>> xs = give_me_xs(bs, dim);
 
@@ -263,10 +276,10 @@ int main(){
     cout << "\npsp done" << endl;
     end = get_time_msec();
     cout << "\npsp_x_w" << endl;
-    print_vec_1d(psp_x_w, bs);
+    //print_vec_1d(psp_x_w, bs);
     printf("time: %f\n", end-start);
 
-    print_vec_1d(debug(xs, w, dim, bs), bs);
+    //print_vec_1d(debug(xs, w, dim, bs), bs);
 
     return 0;
 
