@@ -47,8 +47,7 @@ def give_me_data(filename=None, pandas_object=None):
 
   return X,y
 
-def load_df_for_test(size=500):
-  filename = "Challenge/Challenge.fa"
+def load_df_for_test(filename, size=500):
   with open(filename, "r") as f:
     test = f.readlines()
 
@@ -135,8 +134,7 @@ def load_df_for_test(size=500):
   return df_lists
 
 #def load_df(start, end):
-def load_df():
-  filename = "Challenge/Challenge.fa"
+def load_df(filename):
   with open(filename, "r") as f:
     test = f.readlines()
 
@@ -201,7 +199,12 @@ def load_df():
 
 
 if __name__ == "__main__":
-  df_list = load_df_for_test()
+  #filename = "Challenge/Challenge.fa"
+  assert(len(sys.argv)==2)
+  filename = sys.argv[1]
+  assert(filename.endswith("fa"))
+
+  df_list = load_df_for_test(filename)
   columns = ["class", "id", "seq"]
   df = pd.DataFrame(data=df_list, columns=columns)
   df_s = df.sample(frac=1)
