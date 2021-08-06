@@ -1,17 +1,18 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(capsuleflow VERSION 1.0.0 LANGUAGES CXX C)
+project(onehot VERSION 1.0.0 LANGUAGES CXX C)
 
 
 #set(CMAKE_CXX_FLAGS "-g -O0 -fpermissive -fopenmp  -lgmp")
-set(CMAKE_CXX_FLAGS "-g -O0 -fpermissive -fopenmp ")
+set(CMAKE_CXX_FLAGS "-g -O0 -fpermissive -std=c++11")
 
 
 find_package(Threads REQUIRED)
-
-# Import Microsoft SEAL
+#find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(SEAL 3.6.5 EXACT REQUIRED)
 
-add_executable(test1 test1.cpp)
-target_link_libraries(test1 SEAL::seal Threads::Threads)
-target_include_directories(test1 PRIVATE)
+
+add_executable(test_main_cpp test1.cpp)
+#target_link_libraries(test1 Threads::Threads Eigen3::Eigen SEAL::seal)
+target_link_libraries(test_main_cpp Threads::Threads SEAL::seal)
+target_include_directories(test_main_cpp PRIVATE)

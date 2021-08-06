@@ -1,62 +1,85 @@
 #include <iostream>
 #include <algorithm>
 #include <cassert>
-
+#include <string>
+#include <fstream>
+#include <chrono>
 
 #include "seal/seal.h"
 
 using namespace std;
 using namespace seal;
-
-#include <chrono>
 using namespace std::chrono;
+
 inline double get_time_msec(void){
     return static_cast<double>(duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count())/1000000;
 }
 
-//vector<vector<double>> give_me_ys(int bs, int dim){
-//  vector<vector<double>> res;
-//  for(int i=0; i<bs; i++){
-//    vector<double> tmp;
-//    for(int j=0; j<dim; j++){
-//      tmp.push_back(double(i)*0.1 + double(j));
-//    }
-//    res.push_back();
-//  }
-//  return res;
-//}
+std::vector<std::string> split2(std::string str, char del) {
+    int first = 0;
+    int last = str.find_first_of(del);
+    std::vector<std::string> result;
+    while (first < str.size()) {
+        std::string subStr(str, first, last - first);
+        result.push_back(subStr);
+        first = last + 1;
+        last = str.find_first_of(del, first);
+        if (last == std::string::npos) {
+            last = str.size();
+        }
+    } return result;
+}
 
-vector<double> give_me_w(int dim){
-  vector<double> res;
-  for(int i=0; i<dim; i++){
-    res.push_back(double(i)*0.1 + double(i));
+std::vector<std::vector<std::string> >
+csv2vector(std::string filename, int ignore_line_num = 0){
+    std::ifstream reading_file;
+    reading_file.open(filename, std::ios::in);
+    if(!reading_file){
+        std::vector<std::vector<std::string> > data;
+        return data;
+    }
+    std::string reading_line_buffer;
+    for(int line = 0; line < ignore_line_num; line++){
+        getline(reading_file, reading_line_buffer);
+        if(reading_file.eof()) break;
+    }
+
+    std::vector<std::vector<std::string> > data;
+    while(std::getline(reading_file, reading_line_buffer)){
+        if(reading_line_buffer.size() == 0) break;
+        std::vector<std::string> temp_data;
+        temp_data = split2(reading_line_buffer, ',');
+        data.push_back(temp_data);
+    }
+    return data;
+}
+
+vector<vector<double>> vector_2d_to_double(vector<vector<string>> x){
+  vector<vector<double>> res;
+  for(int i=0; i<x.size(); i++){
+    vector<double> tmp;
+    for(int j=0; j<x[0].size(); j++){
+      tmp.push_back(stod(x[i][j]));
+    }
+
+    res.push_back(tmp);
   }
   return res;
 }
 
-vector<vector<double>> give_me_xs(int batch_size, int dim){
-  vector<vector<double>> xs(batch_size, vector<double>(dim));
-  for(int i=0; i<batch_size; i++){
-    for(int j=0; j<dim; j++){
-      xs[i][j] = double(i)*0.1 + double(j);
+vector<vector<int>> vector_2d_to_int(vector<vector<string>> x){
+  vector<vector<int>> res;
+  for(int i=0; i<x.size(); i++){
+    vector<int> tmp;
+    for(int j=0; j<x[0].size(); j++){
+      tmp.push_back(stoi(x[i][j]));
     }
+
+    res.push_back(tmp);
   }
-  return xs;
+  return res;
 }
 
-
-void print_vec_1d(vector<double> x, int size){
-  for(int i=0; i<size; i++){
-    printf("%f, ", x[i]);
-  }
-  printf("\n");
-}
-
-void print_vec_2d(vector<vector<double>> xs, int size){
-  for(int i=0; i<xs.size(); i++){
-    print_vec_1d(xs[i], size);
-  }
-}
 
 vector<vector<double>> pp_xs(vector<vector<double>> xs, int l, int ls, int n, int dim, int bs){
   assert(xs.size() == bs);
@@ -67,9 +90,8 @@ vector<vector<double>> pp_xs(vector<vector<double>> xs, int l, int ls, int n, in
     vector<double> tmp;
     for(int j=0; j<l; j++){
       for(int k=0; k<dim; k++){
-        tmp.push_back(xs[i][j*dim+k]);
+        tmp.push_back(xs[i*l+j][k]);
       }
-
     }
     res.push_back(tmp);
   }
@@ -79,23 +101,26 @@ vector<vector<double>> pp_xs(vector<vector<double>> xs, int l, int ls, int n, in
     for(int k=0; k<dim; k++){
       tmp.push_back(xs[(n-1)*l+j][k]);
     }
-
   }
   res.push_back(tmp);
-
   assert(res.size()==n);
-
   return res;
 }
 
-vector<vector<double>> pp_ys(vector<vector<double>> ys){
-
-}
 
 vector<double> pp_w(vector<double> w, int dim){
   assert(w.size() == dim);
   std::reverse(w.begin(), w.end());
   return w;
+}
+
+
+vector<double> pp_b(double b, int pmd){
+  vector<double> res(pmd);
+  for(int i=0; i<pmd; i++){
+    res[i] = b;
+  }
+  return res;
 }
 
 vector<Ciphertext> encode_encrypt_input(vector<vector<double>> xs, CKKSEncoder &encoder, Encryptor &encryptor, double scale, int n){
@@ -121,11 +146,33 @@ Plaintext encode_w(vector<double> w, CKKSEncoder &encoder, double scale){
   return res;
 }
 
+Plaintext encode_b(vector<double> b, CKKSEncoder &encoder, double scale){
+  Plaintext res;
+  encoder.encode_as_coeff(b, scale, res);
+  return res;
+}
+
 vector<Ciphertext> mult_xs_w(vector<Ciphertext> xs, Plaintext w, Evaluator &evaluator, RelinKeys relin_keys, int n){
   vector<Ciphertext> res;
   for(int i=0; i<n; i++){
     Ciphertext tmp;
     evaluator.multiply_plain(xs[i], w, tmp);
+    evaluator.relinearize_inplace(tmp, relin_keys);
+
+    res.push_back(tmp);
+  }
+  return res;
+}
+
+vector<Ciphertext> add_xs_b(vector<Ciphertext> xs, Plaintext b, Evaluator &evaluator, RelinKeys relin_keys, int n){
+  vector<Ciphertext> res;
+  for(int i=0; i<n; i++){
+    Ciphertext tmp;
+
+    int scale_n = int(round(log2(xs[i].scale())));
+    b.scale() = pow(2.0, scale_n);
+
+    evaluator.add_plain(xs[i], b, tmp);
     res.push_back(tmp);
   }
   return res;
@@ -167,7 +214,7 @@ vector<double> psp_res(vector<vector<double>> xs, int l, int ls, int n, int dim,
 }
 
 
-vector<double> debug(vector<vector<double>> xs, vector<double> w, int dim, int bs){
+vector<double> debug(vector<vector<double>> xs, vector<double> w, double b, int dim, int bs){
   assert(xs.size() == bs);
   assert(xs[0].size() == dim);
   assert(w.size() == dim);
@@ -187,40 +234,97 @@ vector<double> debug(vector<vector<double>> xs, vector<double> w, int dim, int b
     for(int j=0; j<dim; j++){
       tmp3 += tmp1[i][j];
     }
-    res.push_back(tmp3);
+    res.push_back(tmp3+b);
   }
 
   return res;
 }
 
 
+vector<vector<double>> test_slice(vector<vector<double>> x, int size){
+    vector<vector<double>> tmp;
+    for(int i=0; i<size; i++){
+      tmp.push_back(x[i]);
+    }
+    return tmp;
+}
 
 
-int main(){
-    cout << "hello, world" << endl;
+
+vector<int> parse_result(vector<vector<double>> res){
+  vector<int> parsed_res(res[0].size());
+  for(int i=0; i<res[0].size(); i++){
+    int tmp_index = -1;
+    double tmp_value = -100;
+    for(int j=0; j<res.size(); j++){
+      if(res[j][i] > tmp_value){
+        tmp_index = j;
+        tmp_value = res[j][i];
+      }
+    }
+    parsed_res[i] = tmp_index;
+  }
+  return parsed_res;
+}
+
+void write_result_to_file(vector<int> x, string filename){
+  ofstream myfile(filename);
+  int vsize = x.size();
+  for (int n=0; n<vsize; n++)
+  {
+      myfile << x[n] << endl;
+  }
+}
+
+void write_result_to_file(vector<double> x, string filename){
+  ofstream myfile(filename);
+  int vsize = x.size();
+  for (int n=0; n<vsize; n++)
+  {
+      myfile << x[n] << endl;
+  }
+}
+
+void write_label_to_file(vector<vector<int>> x, string filename){
+  ofstream myfile(filename);
+  int vsize = x.size();
+  for (int n=0; n<vsize; n++)
+  {
+      myfile << x[n][0] << endl;
+  }
+
+}
+
+
+int main(int argc, char *argv[]){
+    assert(argc==4); 
+    // "usage ./test_main input_data_folder input_lr_folder output_folder"
+    string input_data_folder = argv[1];
+    string input_lr_folder = argv[2];
+    string output_folder = argv[3];
+
+    printf("hello, world\n");
+    printf("\n====================================================\n");
+    printf("input_data_folder: %s\n", input_data_folder.c_str());
+    printf("input_lr_folder: %s\n", input_lr_folder.c_str());
+    printf("output_folder: %s\n", output_folder.c_str());
+
     EncryptionParameters parms(scheme_type::ckks);
 
 
-    /* 8192
+    ///* 8192
     size_t poly_modulus_degree = 8192;
     int pmd = 8192;
     parms.set_poly_modulus_degree(poly_modulus_degree);
     parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, { 60, 40, 60 }));
     double scale = pow(2.0, 40);
-    */
+    //*/
 
-    // /* 4096
-    size_t poly_modulus_degree = 4096;
-    int pmd = 4096;
-    parms.set_poly_modulus_degree(poly_modulus_degree);
-    parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, { 40, 29, 40 }));
-    double scale = pow(2.0, 29);
-    // */
-    
     SEALContext context(parms);
 
     // key gen
-    cout << "ititialization of ckks keys etc" << endl;
+    printf("\n====================================================\n");
+    cout << "keygen and context...." << endl;
     KeyGenerator keygen(context);
     auto secret_key = keygen.secret_key();
     PublicKey public_key;
@@ -235,14 +339,30 @@ int main(){
 
     CKKSEncoder encoder(context);
 
+    printf("\n====================================================\n");
+    printf("setting for lr...\n");
     int dim = 200;
     int bs = 2000;
-    vector<double> w = give_me_w(dim);
-    vector<vector<double>> xs = give_me_xs(bs, dim);
+    //vector<double> w = give_me_w(dim);
+    //vector<double> b;
 
-    //print_vec_1d(w, dim);
-    //cout << endl;
-    //print_vec_2d(xs, dim);
+    // not using npy loading due to the unstableness...
+    //LoadNpy("/from_local/lr_npy/weight.npy", w);
+    //LoadNpy("/from_local/lr_npy/bias.npy", b);
+    //LoadNpy("/from_local/pp_npy/x_test.npy", xs);
+
+    vector<vector<double>> w = vector_2d_to_double(csv2vector(input_lr_folder + "/weight.csv"));
+    vector<vector<double>> b = vector_2d_to_double(csv2vector(input_lr_folder + "/bias.csv"));
+    vector<vector<double>> xs = vector_2d_to_double(csv2vector(input_data_folder + "/x_test.csv"));
+    vector<vector<int>> ys = vector_2d_to_int(csv2vector(input_data_folder + "/y_test.csv"));
+
+
+    printf("w size: %d, %d\n", w.size(), w[0].size());
+    printf("b size: %d\n", b.size());
+    printf("xs size: %d, %d\n", xs.size(), xs[0].size());
+    printf("ys size: %d, %d\n", ys.size(), ys[0].size());
+
+
 
     int l = min(pmd/2/2/dim, bs); // 1 ctxt can have at most l of x
     int n = bs/l;
@@ -250,36 +370,90 @@ int main(){
     if(nt!=0) n += 1; // n ctxts in total
     int ls = l;
     if(nt!=0) ls = nt; // last ctxt has ls of x
-    printf("dim=%d\nbs=%d\nl=%d\nn=%d\nnt=%d\nls=%d\n", dim, bs, l, n, nt, ls);
+    printf("dim=%d, bs=%d, l=%d, n=%d, t=%d, ls=%d\n", dim, bs, l, n, nt, ls);
 
+
+    printf("\n====================================================\n");
+    printf("encryption...\n");
     double start, end;
     start = get_time_msec();
+    //xs = test_slice(xs, bs);
     vector<vector<double>> ppd_xs = pp_xs(xs, l, ls, n, dim, bs);
-    cout << ppd_xs.size() << endl;
-    cout << ppd_xs[0].size() << endl;
-
-    print_vec_2d(ppd_xs, 10);
-
-
-    //print_vec_2d(ppd_xs, dim*(l+1));
-    vector<double> ppd_w = pp_w(w, dim);
-    cout << "\npp done" << endl;
 
     vector<Ciphertext> enc_xs = encode_encrypt_input(ppd_xs, encoder, encryptor, scale, n);
-    Plaintext plain_w = encode_w(ppd_w, encoder, scale);
-    cout << "\nenc done" << endl;
-    vector<Ciphertext> xs_w = mult_xs_w(enc_xs, plain_w, evaluator, relin_keys, n);
-    cout << "\nmult done" << endl;
-    vector<vector<double>> dec_res = decrypt_decode_res(xs_w, encoder, decryptor, n);
-    cout << "\ndec done" << endl;
-    vector<double> psp_x_w = psp_res(dec_res, l, ls, n, dim, bs);
-    cout << "\npsp done" << endl;
-    end = get_time_msec();
-    cout << "\npsp_x_w" << endl;
-    //print_vec_1d(psp_x_w, bs);
-    printf("time: %f\n", end-start);
 
-    //print_vec_1d(debug(xs, w, dim, bs), bs);
+
+    printf("\n====================================================\n");
+    printf("calculation...\n");
+    vector<vector<Ciphertext>> res_ctxt;
+    for(int i=0; i<4; i++){
+      printf("label loop: %d\n", i);
+      vector<double> ppd_w = pp_w(w[i], dim);
+      vector<double> ppd_b = pp_b(b[i][0], pmd);
+      Plaintext plain_w = encode_w(ppd_w, encoder, scale);
+      Plaintext plain_b = encode_b(ppd_b, encoder, scale);
+      vector<Ciphertext> xs_w = mult_xs_w(enc_xs, plain_w, evaluator, relin_keys, n);
+      xs_w = add_xs_b(xs_w, plain_b, evaluator, relin_keys, n);
+      res_ctxt.push_back(xs_w);
+    }
+
+
+    printf("\n====================================================\n");
+    printf("decryption...\n");
+    vector<vector<double>> res;
+    for(int i=0; i<4; i++){
+      vector<vector<double>> dec_res = decrypt_decode_res(res_ctxt[i], encoder, decryptor, n);
+      vector<double> psp_x_w = psp_res(dec_res, l, ls, n, dim, bs);
+      res.push_back(psp_x_w);
+    }
+
+    //printf("after calc: %d, %d\n", res.size(), res[0].size());
+
+    printf("\n====================================================\n");
+    printf("parsing result...\n");
+    vector<int> parsed_res = parse_result(res);
+    end = get_time_msec();
+    printf("time for prediction %d: %f\n", bs, end-start);
+    printf("\n====================================================\n");
+    printf("done...\n");
+
+
+    printf("\n====================================================\n");
+    printf("debug purpose......\n");
+    vector<vector<double>> res_raw;
+    for(int i=0; i<4; i++){
+      vector<double> tmp = debug(xs, w[i], b[i][0], dim, bs);
+      res_raw.push_back(tmp);
+    }
+    vector<int> parsed_raw_res = parse_result(res_raw);
+
+    write_result_to_file(parsed_res, output_folder + "/result_cipher.txt");
+    write_result_to_file(parsed_raw_res, output_folder + "/result_raw.txt");
+    write_label_to_file(ys, output_folder + "/result_label.txt");
+
+    for(int i=0; i<parsed_res.size(); i++){
+      printf("%d, ", parsed_res[i]);
+    }
+    printf("\n");
+
+
+    for(int i=0; i<ys.size(); i++){
+      printf("%d, ", ys[i][1]);
+    }
+    printf("\n");
+
+    
+    int tot = 0;
+    int right = 0;
+    for(int i=0; i<ys.size(); i++){
+      if(int(parsed_res[i]) == int(ys[i][1])){
+        right+=1;
+      }
+      tot+=1;
+    }
+
+    printf("tot: %d, right: %d, acc: %f\n", tot, right, double(right)/double(tot));
+
 
     return 0;
 

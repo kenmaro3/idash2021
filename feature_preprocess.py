@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pickle
+import time
 
 if __name__ == "__main__":
   from sklearn.decomposition import PCA
@@ -9,32 +10,17 @@ if __name__ == "__main__":
   from sklearn.decomposition import TruncatedSVD
   from sklearn.manifold import TSNE
 
-  comp_dim = 2
-  is_pca = False
-  is_spca = True
-  is_nmf = False
-  is_tsvd = False
-  is_tsne = False
+  comp_dim = 200
+  is_pca = True
 
   if is_pca:
     executor = PCA(n_components=comp_dim)
-    data_file_name = f"pca_{comp_dim}.pkl"
-  elif is_spca:
-    executor = SparsePCA(n_components=comp_dim)
-    data_file_name = f"spca_{comp_dim}.pkl"
-  elif is_nmf:
-    executor = NMF(n_components=comp_dim)
-    data_file_name = f"nmf_{comp_dim}.pkl"
-  elif is_tsvd:
-    executor = TruncatedSVD(n_components=comp_dim)
-    data_file_name = f"tsvd_{comp_dim}.pkl"
-  elif is_tsne:
-    executor = TSNE(n_components=comp_dim)
-    data_file_name = f"tsne_{comp_dim}.pkl"
+    data_file_name = f"pp_pca/pca_{comp_dim}.pkl"
+  else:
+    raise
 
 
-
-  with open('numerical_df.pkl', 'rb') as f:
+  with open('pp_data/onehot_train.pkl', 'rb') as f:
     df = pickle.load(f)
 
   print(len(df.columns))
@@ -65,16 +51,12 @@ if __name__ == "__main__":
   y = df['Class'].to_numpy()
 
 
-  if not is_tsne:
-    executor.fit(X)
+  t1 = time.time()
 
-    with open(data_file_name, "wb") as f:
-      pickle.dump(executor, f)
+  executor.fit(X)
+  t2 = time.time()
+  print(f"fitting lr took {t2-t1} sec")
 
-  if is_tsne:
-    x = executor.fit_transform(X)
-    print("here")
-    print(x.shape)
-    with open(data_file_name, "wb") as f:
-      pickle.dump(x, f)
+  with open(data_file_name, "wb") as f:
+    pickle.dump(executor, f)
 
