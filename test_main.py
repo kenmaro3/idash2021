@@ -18,8 +18,6 @@ def give_me_data(filename=None, pandas_object=None):
       df = pandas_object
 
 
-  print(len(df.columns))
-
 
   c = []
   for i in range(len(df)):
@@ -89,15 +87,12 @@ def load_df_for_test(filename, size=500):
 
   len_max = max(lens)
 
-  print("here")
-  print(len_max)
   for i in range(len(y)):
     diff = len_max - len(y[i])
     for j in range(diff):
       y[i] += "N"
 
   xs = [">B.1.526", ">B.1.1.7", ">B.1.427", ">P.1"]
-  print(f'seq_len: {len(y[0])}')
 
 
   l = []
@@ -152,15 +147,11 @@ def load_df(filename):
 
   len_max = max(lens)
 
-  print("here")
-  print(len_max)
   for i in range(len(y)):
     diff = len_max - len(y[i])
     for j in range(diff):
       y[i] += "N"
-
   xs = [">B.1.526", ">B.1.1.7", ">B.1.427", ">P.1"]
-  print(f'seq_len: {len(y[0])}')
 
 
   l = []
@@ -197,16 +188,7 @@ def load_df(filename):
   return df_lists
 
 
-
-if __name__ == "__main__":
-  #filename = "Challenge/Challenge.fa"
-  assert(len(sys.argv)==2)
-  filename = sys.argv[1]
-  assert(filename.endswith("fa"))
-
-  df_list = load_df_for_test(filename)
-  columns = ["class", "id", "seq"]
-  df = pd.DataFrame(data=df_list, columns=columns)
+def get_onehot_df(df):
   df_s = df.sample(frac=1)
   df = df_s
 
@@ -217,7 +199,6 @@ if __name__ == "__main__":
   dataset = {}
 
   skip = 50
-
   # Loop throught the sequences and split into individual nucleotides
   for i, seq in enumerate(sequences):
       # split into nucleotides, remove tab characters
@@ -227,18 +208,13 @@ if __name__ == "__main__":
       for j in range(0, len(n_tmp), skip):
           if n_tmp[j] != '\t':
               nucleotides.append(n_tmp[j])
-
       #nucleotides = [x for x in nucleotides if x != '\t']
-      
       # Append class assignment
       nucleotides.append(classes[i])
       # add to dataset
       dataset[i] = nucleotides
 
   df = pd.DataFrame(dataset).T
-
-  print(len(df))
-  print(len(df.columns))
 
   #df.rename(columns={29906: 'Class'}, inplace=True)
   df.rename(columns={599: 'Class'}, inplace=True)
@@ -247,25 +223,47 @@ if __name__ == "__main__":
     cats = pickle.load(f)
 
   print("start categorizes df...")
-  t1 = time.time()
   for i in range(len(df.columns)-1):
     df[df.columns[i]] = pd.Categorical(df[df.columns[i]], categories=cats[i])
 
-
   print("start dummies df...")
   dummy_df = pd.get_dummies(df)
-  print(dummy_df.head())
+
+  return dummy_df
+
+
+if __name__ == "__main__":
+  print("==============================")
+  from pyfiglet import Figlet
+  f = Figlet(font="slant")
+  msg = f.renderText("IDASH")
+  print(msg)
+  print("==============================")
+  print("checking input fa file...")
+  #filename = "Challenge/Challenge.fa"
+  assert(len(sys.argv)==2)
+  filename = sys.argv[1]
+  assert(filename.endswith("fa"))
+
+  print("==============================")
+  print("loading to df...")
+  df_list = load_df_for_test(filename)
+  columns = ["class", "id", "seq"]
+  df = pd.DataFrame(data=df_list, columns=columns)
+
+  
+  print("==============================")
+  print("get one hot encoding...")
+  dummy_df = get_onehot_df(df)
   t2 = time.time()
-  print(f"dumming test took {t2-t1} sec")
 
-  #with open('pp_data/onehot_test.pkl', 'wb') as f:
-  #  pickle.dump(dummy_df, f)
-
-  # load data
+  print("==============================")
+  print("make it into X, y form...")
   #X, y = give_me_data("pp_data/onehot_test.pkl")
   X, y = give_me_data(pandas_object=dummy_df)
 
-  # pca data
+  print("==============================")
+  print("apply pca...")
   data_file_name = f"pp_pca/pca_200.pkl"
   with open(data_file_name, "rb") as f:
     executor = pickle.load(f)
@@ -273,6 +271,8 @@ if __name__ == "__main__":
   X = executor.transform(X)
   X = X / np.sqrt(executor.explained_variance_)
 
+  print("==============================")
+  print("write pcaed data to csv for coming c++...")
   np.savetxt("pp_csv/x_test.csv", X, delimiter=',', fmt='%f')
   np.savetxt("pp_csv/y_test.csv", y, delimiter=',', fmt='%f')
 

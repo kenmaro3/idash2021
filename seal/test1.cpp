@@ -452,6 +452,7 @@ int main(int argc, char *argv[]){
       tot+=1;
     }
 
+    printf("\n====================================================\n");
     printf("tot: %d, right: %d, acc: %f\n", tot, right, double(right)/double(tot));
 
 
