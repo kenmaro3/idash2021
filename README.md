@@ -25,12 +25,12 @@ This model uses
 $ git clone https://github.com/kenmaro3/idash2021
 
 ### build docker image
-$ cd idash2021 
-$ docker build -t idash . 
+$ cd idash2021  
+$ docker build -t idash .  
 
 ### untar trained model under idash2021
-$ cd idash2021 
-$ tar -xzvf  trained_model.tar.gz 
+$ cd idash2021  
+$ tar -xzvf  trained_model.tar.gz  
 
 ### run docker container
 $ docker run --name idash2021 -itd -v ./idash2021:/from_local
@@ -50,9 +50,9 @@ python test_main.py /from_local/Challenge/Challenge.fa
 ./seal/test_main_cpp /from_local/pp_data /from_local/trained_model /from_local/results 2000
 ```
 
-at line 4, you can specify the input fasta file. 
-as default, it is set as /from_local/Challenge/Challenge.fa 
-at line 5, please specify the input datasize (# of test data, as default,  set as 2000)
+at line 4, you can specify the input fasta file.  
+as default, it is set as /from_local/Challenge/Challenge.fa  
+at line 5, please specify the input datasize (# of test data, as default,  set as 2000)  
 
 ### run run_test.sh
 $ sh run_test.sh
@@ -62,7 +62,7 @@ $ cat constants.py
 ```
 xs = [">B.1.427", ">B.1.1.7", ">P.1", ">B.1.526"]
 ```
-1st line of constants.py describes the label of the results. 
+1st line of constants.py describes the label of the results.  
 e.g) if label is 0, means that sequence is >B.1.427.
 
 $ ls -l /from_local/results
