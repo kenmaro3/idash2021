@@ -7,14 +7,50 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, accuracy_score
 from sklearn.model_selection import KFold, train_test_split, cross_val_score
 
-from data import give_me_data, give_me_visual
+import constants
+
+def give_me_data(filename=None, pandas_object=None):
+
+  if filename is not None and pandas_object is None:
+      #with open('numerical_df.pkl', 'rb') as f:
+      with open(filename, 'rb') as f:
+        df = pickle.load(f)
+  elif filename is None and pandas_object is not None:
+      df = pandas_object
+
+
+
+  c = []
+  for i in range(len(df)):
+    if df['Class_0'][i] == 1:
+      c.append(0)
+    elif df['Class_1'][i] == 1:
+      c.append(1)
+    elif df['Class_2'][i] == 1:
+      c.append(2)
+    elif df['Class_3'][i] == 1:
+      c.append(3)
+    else:
+      raise
+
+  df = df.drop(columns=['Class_0'])
+  df = df.drop(columns=['Class_1'])
+  df = df.drop(columns=['Class_2'])
+  df = df.drop(columns=['Class_3'])
+  df["Class"] = c
+  print(df.head())
+
+
+  X = df.drop(['Class'], axis=1).to_numpy()
+  y = df['Class'].to_numpy()
+
+  return X,y
 
 if __name__ == "__main__":
   ## load data
-  X, y = give_me_data("pp_data/onehot_train.pkl")
+  X, y = give_me_data(filename=constants.pp_data_onehot_train)
   ## load trained pca class
-  data_file_name = f"pp_pca/pca_200.pkl"
-  with open(data_file_name, "rb") as f:
+  with open(constants.pp_pca_model , "rb") as f:
     executor = pickle.load(f)
 
   ##################################################################
@@ -32,17 +68,15 @@ if __name__ == "__main__":
   print(accuracy_score(y_test, predictions))
   print(classification_report(y_test, predictions))
 
-  with open('lr_pkl/clf.pkl', 'wb') as f:
+  with open(constants.pp_lr_model, 'wb') as f:
     pickle.dump(clf, f)
 
-  print("here")
-  print(clf.intercept_)
+  #print("this is trained lr parameters...")
+  #print(clf.coef_)
+  #print(clf.intercept_)
 
-  np.save("lr_npy/weight.npy", clf.coef_, allow_pickle=False)
-  np.save("lr_npy/bias.npy", clf.intercept_, allow_pickle=False)
-
-  np.savetxt("lr_csv/weight.csv", clf.coef_, delimiter=',', fmt='%f')
-  np.savetxt("lr_csv/bias.csv", clf.intercept_, delimiter=',', fmt='%f')
+  np.savetxt(constants.pp_lr_model_weight, clf.coef_, delimiter=',', fmt='%f')
+  np.savetxt(constants.pp_lr_model_bias, clf.intercept_, delimiter=',', fmt='%f')
 
   ###################################################################
   #executor.whiten = True

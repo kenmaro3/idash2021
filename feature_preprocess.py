@@ -3,24 +3,21 @@ import pandas as pd
 import pickle
 import time
 
+import constants
+
 if __name__ == "__main__":
   from sklearn.decomposition import PCA
-  from sklearn.decomposition import SparsePCA
-  from sklearn.decomposition import NMF
-  from sklearn.decomposition import TruncatedSVD
-  from sklearn.manifold import TSNE
 
   comp_dim = 200
   is_pca = True
 
   if is_pca:
     executor = PCA(n_components=comp_dim)
-    data_file_name = f"pp_pca/pca_{comp_dim}.pkl"
   else:
     raise
 
 
-  with open('pp_data/onehot_train.pkl', 'rb') as f:
+  with open(constants.pp_data_onehot_train, 'rb') as f:
     df = pickle.load(f)
 
   print(len(df.columns))
@@ -57,6 +54,6 @@ if __name__ == "__main__":
   t2 = time.time()
   print(f"fitting lr took {t2-t1} sec")
 
-  with open(data_file_name, "wb") as f:
+  with open(constants.pp_pca_model, "wb") as f:
     pickle.dump(executor, f)
 
