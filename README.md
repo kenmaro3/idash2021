@@ -351,11 +351,146 @@ $ ls -l /from_local/results
 
 ## How To Use Model2
 
+git repository is here (https://gitlab.com/yama_ry/idash2021)  
 
-
+docker hub url is here (https://hub.docker.com/layers/dpiyama/idash2021/latest/images/sha256-b1a22c92934851081cc1bc1ce972155133e6393913a884be9053e4735b4da784?context=repo)
 
 <br>
+
+### pull docker image from docker hub
+Please pull docker image.
+```
+$ docker pull dpiyama/idash2021
+```
+
+### prepare fastafile and output directory
+You need to prepare "fastafile for test" and "output path to output the results after computation".
+
+I represent fastafile path as `<path_to_the_fastafile>` and output path for the results as `<output_folder>`.
+
+
+### run docker container
+Please run docker container as follows.
+```
+$ docker run --name idash -it -v <path_to_the_fastafile>:/data/Challenge.fa -v <output_folder>:/output_path dpiyama/idash2021
+```
+Then you are in the container. 
+
+Please make sure that you should see fasta file at `/data/Challenge.fa.`
+
+### Compile 
+After that please compile codes with cmake as follows.  
+
+```sh
+$ cd /idash2021 && mkdir build && cd build && cmake ../src/ && make
+```
+
+Then compiled two binaries are generated:
+- `./bin/preprocessing`: exec file for preprocessing
+- `./bin/pred_rna`: exec file for encryption, computation and decryption
+
+### Check parameters for the models
+Parameters of logistic regression and PCA are saved at `/idash2021/data` which is included at docker image.
+
+You can see the following binary files at this directory.
+```
+$ ls -lh /idash2021/data/
+root@f8d9b07e577c:/idash2021/build# ls -lh /idash2021/data/
+total 283M
+-rw-r--r--. 1 root root  144 Aug 17 12:28 bias_200.npy
+-rw-r--r--. 1 root root 3.3K Aug 17 12:28 coef_200.npy
+-rw-r--r--. 1 root root 185M Aug 17 12:28 pca_200.pkl
+-rw-r--r--. 1 root root  92M Aug 17 12:28 pca_200_components.npy
+-rw-r--r--. 1 root root 469K Aug 17 12:28 pca_200_mean.npy
+-rw-r--r--. 1 root root  928 Aug 17 12:28 pca_200_variance.npy
+```
+
+### Preprocessing
+Please make sure you are in `/idash2021/build`
+
+This algorithm requires preprocessing with PCA. Therefore before running algorithm you need to run preprocessing code as following command.
+
+```sh
+$ ./bin/preprocessing /data/Challenge.fa
+
+---------------------------
+input_path: /data/Challenge.fa
+parameter_folder: ../data
+--- start preprocessing ---
+ls /idash2021/data/features.bin
+preprocessing_time[ms]: 42261
+---- end preprocessing ----
+
+```
+where the argument represents the fastafile that you mounted at /data/Challenge.fa with docker run command.
+
+NOTE: If you have problem here, please grant access to the fastafile with chmod command.
+
+Then the preprocessed feature is outputed at `/idash2021/data/features.bin`.
+
+```sh
+$ ls /idash2021/data/features.bin
+/idash2021/data/features.bin
+```
+
+### run computation
+Please make sure you are in `/idash2021/build`.
+
+After the preprocessing, please run the computation including encryption, inference and decryption by the following command.
+
+```sh
+$ ./bin/pred_rna /output_path
+
+------------------------
+output_folder: /output_path
+parameter_folder: ../data
+--- start prediction ---
+[client] encryption time: 176
+[server] computation time: 418
+[client] decryption time: 340
+total time: 949
+---- end prediction ----
+```
+where the argument represents the output folder to save the results and metrics. This output folder was mounted with docker run command.
+
+Finnaly you can get results at `/output_path`.
+
+Please make sure the following csv files are generated in to `/output_path/`
+```sh
+root@f8d9b07e577c:/idash2021/build# ls -lh /output_path/
+total 412K
+-rw-r--r--. 1 root root  102 Aug 17 13:54 metrics.csv
+-rw-r--r--. 1 root root 407K Aug 17 13:54 result.csv
+```
+
+### check results and labels
+`result.csv` include the probabilities of the strains. 
+```sh
+root@f8d9b07e577c:/idash2021/build# head /output_path/result.csv
+index, B.1.427, B.1.1.7, P.1, B.1.526
+0, 0.999937, 1.37394e-05, 4.50208e-05, 4.18259e-06
+1, 0.9999, 5.21238e-08, 9.34773e-05, 6.31499e-06
+2, 0.999999, 1.79413e-13, 9.34512e-07, 2.75084e-08
+3, 0.998126, 9.60127e-09, 0.00187428, 2.52428e-11
+4, 0.999942, 1.03136e-05, 4.46096e-05, 3.40095e-06
+5, 0.999935, 7.00767e-06, 5.55054e-05, 2.35792e-06
+6, 0.999931, 7.39445e-06, 5.90878e-05, 2.41872e-06
+7, 0.999714, 0.000202572, 4.84547e-05, 3.53809e-05
+8, 0.999464, 1.41565e-06, 0.000511061, 2.35071e-05
+```
+As you can see, the first column is index. The second, third, fourth, and fifth columns show the output probabilities of the labels shown in the headers, respectively.
+
 <br>
+
+`metrics.csv` include time[ms] of the computation.
+```sh
+$ head /output_path/metrics.csv
+round_trip_time[ms], encryption_time[ms], computation_time[ms], decryption_time[ms]
+949,176, 418, 340
+```
+
+Note that, preprocessing time is not included in this file. Please check the stdout of preprocessing if you need the preprocessing time. You can use `preprocessing_time` of the stdout as that time.
+
 
 ## Licences
 
