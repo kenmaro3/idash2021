@@ -512,7 +512,7 @@ int main(int argc, char *argv[]){
     write_computation_to_file(end_computation - start_computation, output_folder + "/computation.csv");
     write_roundtrip_to_file(end_roundtrip - start_roundtrip, output_folder + "/roundtrip.csv");
     write_probability_to_file(res_probability, output_folder + "/probability.csv");
-    write_probability_to_file(res, output_folder + "/res.csv");
+    //write_probability_to_file(res, output_folder + "/res.csv");
     write_result_to_file(parsed_res, output_folder + "/result_cipher_label.txt");
 
 
