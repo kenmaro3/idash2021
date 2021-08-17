@@ -33,10 +33,15 @@ $ cd idash2021
 $ tar -xzvf  trained_model.tar.gz  
 
 ### run docker container
-$ docker run --name idash2021 -itd -v ./idash2021:/from_local
+$ docker run --name idash2021 -itd -v <path_to_this_repository>/:/from_local idash
 
 ### enter docker container and run the inference
 $ docker exec -it idash2021 bash
+
+### build c++ file
+$ cd seal  
+$ cmake . && make -j4  
+$ cd ..
 
 ### look at /from_local/run_test.sh
 $ cat run_test.sh
@@ -45,12 +50,11 @@ $ cat run_test.sh
 >>>run_test.sh
 rm -rf /from_local/results /from_local/pp_data
 mkdir /from_local/results /from_local/pp_data
-source ~/.pyenv/versions/myenv/bin/activate
 python test_main.py /from_local/Challenge/Challenge.fa
 ./seal/test_main_cpp /from_local/pp_data /from_local/trained_model /from_local/results 2000
 ```
 
-at line 4, you can specify the input fasta file.  
+at line 3, you can specify the input fasta file.  
 as default, it is set as /from_local/Challenge/Challenge.fa  
 at line 5, please specify the input datasize (# of test data, as default,  set as 2000)  
 
