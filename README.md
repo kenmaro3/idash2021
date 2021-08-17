@@ -120,8 +120,9 @@ we implemeted this coeffifient encoding method in CKKS scheme
 at https://github.com/kenmaro3/SEAL/tree/ckks_coeff_365** 
 
 By using this coefficient for CKKS, we can have advantages for speed significantly.  
-Since we can pack two vectors in forward-backward order to calculate inner product of two which uses intrinsic convolutional operation of two polynomial, 
-we do not have to operate rotation operation in the case of CKKS canonical embedded encoding.  
+Since we can pack two vectors in forward-backward order to calculate inner product of two. 
+Since it uses intrinsic convolutional operation of two polynomial, 
+we do not have to operate rotation operation as should be done for sure in CKKS canonical embedded encoding method.  
 
 For example, we want to calculate inner product of two vectors,   
 $W = {2, 4, 1}$, $X = {1, 2, 2}$,  
