@@ -58,6 +58,9 @@ at line 3, you can specify the input fasta file.
 as default, it is set as /from_local/Challenge/Challenge.fa  
 at line 5, please specify the input datasize (# of test data, as default,  set as 2000)  
 
+### activate pyenv
+$ source setup.sh  
+
 ### run run_test.sh
 $ sh run_test.sh
 
