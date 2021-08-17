@@ -111,14 +111,16 @@ Let us explain about this in little detail.
 
 **Instead of using canonical embedding by CKKS encoding, we used coefficient packing.**  
 
-In Microsoft SEAL, only BFV scheme has coefficient packing which is the direct encoding the number onto polynomial coefficient, CKKS only supports canonical embedded space in sub-ring to utilize SIMD operation. This is very powerful in some cases because SIMD opeartion can be easily done in encrypted space in sub-ring.  
-However, we decided to use coefficient packing due to the reason described below,  
+In Microsoft SEAL, only BFV scheme has coefficient packing which is the direct encoding the number onto polynomial coefficient, CKKS only supports canonical embedded space in sub-ring to utilize SIMD operation.  
+This is very powerful in some cases because summation and multiplication in each sub-ring can be easily done.  
+However, in order to do inner product of two vector, rotation operation is needed to sum up the element between the sub-ring.  
 
-**therefore, we implemeted this coeffifient encoding method in CKKS scheme 
+**Since we found this inner product can be done more efficiently using coefficient method, 
+we implemeted this coeffifient encoding method in CKKS scheme 
 at https://github.com/kenmaro3/SEAL/tree/ckks_coeff_365** 
 
-By using this coefficient for CKKS, we can have advantages for speed and accuracy.  
-For speed, since we can utilize forward-backward encoding to calculate inner product of two vectors which uses intrinsic convolutional operation of two polynomial, 
+By using this coefficient for CKKS, we can have advantages for speed significantly.  
+Since we can pack two vectors in forward-backward order to calculate inner product of two which uses intrinsic convolutional operation of two polynomial, 
 we do not have to operate rotation operation in the case of CKKS canonical embedded encoding.  
 
 For example, we want to calculate inner product of two vectors,   
@@ -147,7 +149,8 @@ For this reasons, we decided to use CKKS + Coefficient method in our solutions.
 <br>
 
 ### Accuracy point of view
-For accuracy, since we use CKKS not BFV, we can expect more flexible implementation for real number encoding, which leads us not to degrade the inference accuracy compared with raw inference as best as possible.  
+Since we use CKKS scheme, we can achieve better accuracy than using BFV. 
+We can expect more flexible implementation for real number encoding, which leads us not to degrade the inference accuracy compared with raw inference as best as possible.  
 
 In conclusion, our coefficient encoding method using CKKS holds the advantage as described table bellow.  
 
