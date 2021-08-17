@@ -4,6 +4,7 @@
 #include <string>
 #include <fstream>
 #include <chrono>
+#include <omp.h>
 
 #include "seal/seal.h"
 
@@ -123,7 +124,10 @@ vector<double> pp_b(double b, int pmd){
 
 vector<Ciphertext> encode_encrypt_input(vector<vector<double>> xs, CKKSEncoder &encoder, Encryptor &encryptor, double scale, int n){
   vector<Plaintext> tmp(n);
-  for(int i=0; i<n; i++){
+
+  int i;
+  #pragma omp parallel for private(i)
+  for(i=0; i<n; i++){
     //Plaintext tmp1;
     //encoder.encode_as_coeff(xs[i], scale, tmp1);
     encoder.encode_as_coeff(xs[i], scale, tmp[i]);
@@ -152,7 +156,9 @@ Plaintext encode_b(vector<double> b, CKKSEncoder &encoder, double scale){
 
 vector<Ciphertext> mult_xs_w(vector<Ciphertext> xs, Plaintext w, Evaluator &evaluator, RelinKeys relin_keys, int n){
   vector<Ciphertext> res(n);
-  for(int i=0; i<n; i++){
+  int i;
+  #pragma omp parallel for private(i)
+  for(i=0; i<n; i++){
     Ciphertext tmp;
     evaluator.multiply_plain(xs[i], w, res[i]);
     evaluator.relinearize_inplace(res[i], relin_keys);
@@ -164,7 +170,9 @@ vector<Ciphertext> mult_xs_w(vector<Ciphertext> xs, Plaintext w, Evaluator &eval
 
 vector<Ciphertext> add_xs_b(vector<Ciphertext> xs, Plaintext b, Evaluator &evaluator, RelinKeys relin_keys, int n){
   vector<Ciphertext> res(n);
-  for(int i=0; i<n; i++){
+  int i;
+  #pragma omp parallel for private(i)
+  for(i=0; i<n; i++){
     Ciphertext tmp;
 
     int scale_n = int(round(log2(xs[i].scale())));
@@ -181,7 +189,9 @@ vector<vector<double>> decrypt_decode_res(vector<Ciphertext> xs, CKKSEncoder &en
   vector<Plaintext> tmp(n);
   vector<vector<double>> res;
 
-  for(int i=0; i<n; i++){
+  int i;
+  #pragma omp parallel for private(i)
+  for(i=0; i<n; i++){
     //Plaintext tmp1;
     decryptor.decrypt(xs[i], tmp[i]);
     //tmp.push_back(tmp1);
@@ -387,12 +397,12 @@ int main(int argc, char *argv[]){
     EncryptionParameters parms(scheme_type::ckks);
 
 
-    ///* 8192
-    size_t poly_modulus_degree = 8192;
-    int pmd = 8192;
+    ///* 4096 
+    size_t poly_modulus_degree = 4096;
+    int pmd = 4096;
     parms.set_poly_modulus_degree(poly_modulus_degree);
-    parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, { 60, 40, 60 }));
-    double scale = pow(2.0, 40);
+    parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, { 38, 30, 38 }));
+    double scale = pow(2.0, 30);
     //*/
 
     SEALContext context(parms);

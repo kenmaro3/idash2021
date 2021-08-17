@@ -50,3 +50,11 @@ RUN  source ~/.bashrc &&\
     pyenv virtualenv ${PYTHON_VERSION} myenv && pyenv global ${PYTHON_VERSION} && source activate myenv
 
 RUN ~/.pyenv/versions/myenv/bin/pip install --upgrade pip setuptools && ~/.pyenv/versions/myenv/bin/pip install -r requirements.txt
+
+WORKDIR /include
+RUN git clone https://github.com/kenmaro3/idash2021.git && cd idash2021 && cd seal && /opt/cmake/bin/cmake . && make -j4 &&\
+cp -r /include/idash2021/* /from_local/
+
+COPY ./trained_model /from_local/trained_model
+
+WORKDIR /from_local

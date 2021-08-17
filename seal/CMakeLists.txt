@@ -4,7 +4,7 @@ project(onehot VERSION 1.0.0 LANGUAGES CXX C)
 
 
 #set(CMAKE_CXX_FLAGS "-g -O0 -fpermissive -fopenmp  -lgmp")
-set(CMAKE_CXX_FLAGS "-g -O0 -fpermissive -std=c++11")
+set(CMAKE_CXX_FLAGS "-g -O3 -march=native -fpermissive -Ofast -std=c++11 -fopenmp")
 
 
 find_package(Threads REQUIRED)
