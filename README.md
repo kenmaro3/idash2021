@@ -1,6 +1,6 @@
-Document for usage: 
+# Document for usage:
 
-Team: KENMARO-YAMAPOKE
+### Team: KENMARO-YAMAPOKE
 
 
 We submit 2 implementations, basics of algorithm is same for both of them,
@@ -10,36 +10,35 @@ Model 1 is a little bit more naive preprocessing than model 2.
 Please evaluate both of the models following instructions bellow.
 
 
-Model1
+## Model1
 
-Below is copy of README.md from repo
-https://github.com/kenmaro3/idash2021
+We provide decryption and usage of this model.
 
-Description
-This model uses 
-One hot encoding for the input sequence 
-PCA to reduce/extract features (down to 200)
-Logistic regression for classification (200 -> 4)
+## Description
+This model uses
+- One hot encoding for the input sequence
+- PCA to reduce/extract features (down to 200)
+- Logistic regression for classification (200 -> 4)
 
-Usage
-# git clone repo
+## Usage
+### git clone repo
 $ git clone https://github.com/kenmaro3/idash2021
 
-# build docker image
+### build docker image
 $ cd idash2021
 $ docker build -t idash .
 
-# untar trained model under idash2021
+### untar trained model under idash2021
 $ cd idash2021
 $ tar -xzvf  trained_model.tar.gz
 
-# run docker container
+### run docker container
 $ docker run --name idash2021 -itd -v ./idash2021:/from_local
 
-# enter docker container and run the inference
+### enter docker container and run the inference
 $ docker exec -it idash2021 bash
 
-# look at /from_local/run_test.sh 
+### look at /from_local/run_test.sh
 $ cat run_test.sh
 
 ```
@@ -55,10 +54,10 @@ at line 4, you can specify the input fasta file
 as default, it is set as /from_local/Challenge/Challenge.fa
 at line 5, please specify the input datasize (# of test data, as default,  set as 2000)
 
-# run run_test.sh
+### run run_test.sh
 $ sh run_test.sh
 
-# check results and labels
+### check results and labels
 $ cat constants.py
 ```
 xs = [">B.1.427", ">B.1.1.7", ">P.1", ">B.1.526"]
@@ -76,11 +75,11 @@ $ ls -l /from_local/results
 -rw-r--r-- 1 root root    26 Aug 17 05:09 roundtrip.csv
 ```
 
-# description of each output files
-computation.csv: time for server side computation
-decryption.csv:    time for client side decryption
-encryption.csv:    time for client side encryption
-label.csv:             columns is index, id, class (index is aligned with probability.csv and result_cipher_label.csv, id is id from fasta file, class is index of the strain)
-probability.csv:     probabilities of each DNA sequence (order is same with index of label.csv)
-roundtrip.csv :      time for entire cipher classification
+### description of each output files
 
+- computation.csv: time for server side computation
+- decryption.csv:    time for client side decryption
+- encryption.csv:    time for client side encryption
+- label.csv:             columns is index, id, class (index is aligned with probability.csv and result_cipher_label.csv, id is id from fasta file, class is index of the strain)
+- probability.csv:     probabilities of each DNA sequence (order is same with index of label.csv)
+- roundtrip.csv :      time for entire cipher classification
