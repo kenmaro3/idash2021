@@ -297,7 +297,7 @@ with this, you should see fasta file at /data/***.fa
 
 and please make sure the path of fasta file at /from_local/run_test.sh 
 line 3 is pointing to the file mounted to this container. (default /data/Challenge.fa)
-at line 5, please specify the input datasize (# of test data, as default,  set as 2000)  
+at line 4, please specify the input datasize (# of test data, as default,  set as 2000)  
 
 ```
 >>>run_test.sh
@@ -306,6 +306,11 @@ mkdir /from_local/results /from_local/pp_data
 python test_main.py /data/Challenge.fa
 ./seal/test_main_cpp /from_local/pp_data /from_local/trained_model /from_local/results 2000
 ```
+
+Among this, line 3 python script conducts preprocessing (till the end of PCA)  
+Next, line4 c++ binary will read the PACd resluts, then conducts encryption/computation/decryption.  
+
+<br>
 
 ### activate pyenv
 ```
