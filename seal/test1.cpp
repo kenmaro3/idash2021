@@ -439,13 +439,11 @@ int main(int argc, char *argv[]){
     vector<vector<double>> w = vector_2d_to_double(csv2vector(input_lr_folder + "/weight.csv"));
     vector<vector<double>> b = vector_2d_to_double(csv2vector(input_lr_folder + "/bias.csv"));
     vector<vector<double>> xs = vector_2d_to_double(csv2vector(input_data_folder + "/x_test.csv"));
-    vector<vector<int>> ys = vector_2d_to_int(csv2vector(input_data_folder + "/y_test.csv"));
 
 
     printf("w size: %d, %d\n", w.size(), w[0].size());
     printf("b size: %d\n", b.size());
     printf("xs size: %d, %d\n", xs.size(), xs[0].size());
-    printf("ys size: %d, %d\n", ys.size(), ys[0].size());
 
 
 
